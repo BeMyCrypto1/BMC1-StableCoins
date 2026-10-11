@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMC1 Chain 137 Stable Coins</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #000000;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #e0e6f0;
+    }
+
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    header { text-align: center; margin-bottom: 32px; }
+
+    .title {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, #7eb8ff 0%, #c4b5fd 40%, #6ee7d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 30px rgba(126, 184, 255, 0.45));
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: #8a9dc5;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 500;
+      text-shadow: 0 0 12px rgba(0,0,0,0.9);
+    }
+
+    .subtitle .chain-badge {
+      display: inline-block;
+      background: rgba(126, 184, 255, 0.10);
+      border: 1px solid rgba(126, 184, 255, 0.35);
+      border-radius: 999px;
+      padding: 4px 14px;
+      margin-left: 8px;
+      color: #9ec5ff;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      backdrop-filter: blur(4px);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(126, 184, 255, 0.18);
+      border-radius: 999px;
+      padding: 0 18px;
+      min-width: 300px;
+      backdrop-filter: blur(6px);
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .search-wrap:focus-within {
+      border-color: rgba(126, 184, 255, 0.55);
+      box-shadow: 0 0 0 3px rgba(126, 184, 255, 0.10), 0 0 24px rgba(126, 184, 255, 0.18);
+    }
+
+    .search-wrap svg {
+      width: 16px;
+      height: 16px;
+      fill: #7a8bb5;
+      flex-shrink: 0;
+      transition: fill 0.2s;
+    }
+
+    .search-wrap:focus-within svg { fill: #9ec5ff; }
+
+    .search-wrap input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e0e6f0;
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 11px 10px;
+      letter-spacing: 0.03em;
+    }
+
+    .search-wrap input::placeholder { color: #5a6a8a; }
+
+    .search-clear {
+      background: transparent;
+      border: none;
+      color: #5a6a8a;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 4px;
+      display: none;
+      transition: color 0.2s;
+      font-family: inherit;
+    }
+
+    .search-clear:hover { color: #a5d0ff; }
+    .search-wrap.has-value .search-clear { display: block; }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(126, 184, 255, 0.06);
+      border: 1px solid rgba(126, 184, 255, 0.28);
+      color: #9ec5ff;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.25s;
+      backdrop-filter: blur(6px);
+    }
+
+    .refresh-btn:hover {
+      background: rgba(126, 184, 255, 0.14);
+      border-color: rgba(126, 184, 255, 0.55);
+      box-shadow: 0 0 22px rgba(126, 184, 255, 0.28);
+      color: #c5ddff;
+    }
+
+    .refresh-btn:disabled { opacity: 0.6; cursor: wait; }
+
+    .refresh-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .refresh-btn.spinning svg { animation: spin 0.9s linear infinite; }
+
+    .refresh-btn .countdown {
+      font-size: 0.68rem;
+      color: #6a7a9a;
+      font-weight: 700;
+      min-width: 22px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 36px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .stat { text-align: center; }
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #c4b5fd;
+      text-shadow: 0 0 16px rgba(196, 181, 253, 0.45), 0 0 30px rgba(0,0,0,0.9);
+    }
+    .stat-value.pegged { color: #6ee7d4; text-shadow: 0 0 16px rgba(110, 231, 212, 0.45), 0 0 30px rgba(0,0,0,0.9); }
+    .stat-value.below  { color: #ff8a9e; text-shadow: 0 0 16px rgba(255, 138, 158, 0.45), 0 0 30px rgba(0,0,0,0.9); }
+    .stat-value.above  { color: #ffc86e; text-shadow: 0 0 16px rgba(255, 200, 110, 0.45), 0 0 30px rgba(0,0,0,0.9); }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #7a8bb5;
+      margin-top: 2px;
+      text-shadow: 0 0 10px rgba(0,0,0,0.9);
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .column {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(126, 184, 255, 0.14);
+      border-radius: 18px;
+      padding: 18px 16px 20px;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    .column::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 18px 18px 0 0;
+      opacity: 0.9;
+    }
+
+    #col-pegged::before { background: linear-gradient(90deg, transparent, #6ee7d4, transparent); box-shadow: 0 0 14px rgba(110,231,212,0.6); }
+    #col-below::before  { background: linear-gradient(90deg, transparent, #ff8a9e, transparent); box-shadow: 0 0 14px rgba(255,138,158,0.6); }
+    #col-above::before  { background: linear-gradient(90deg, transparent, #ffc86e, transparent); box-shadow: 0 0 14px rgba(255,200,110,0.6); }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 0 4px;
+    }
+
+    .column-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+
+    .column-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-shadow: 0 0 12px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.9);
+    }
+
+    #col-pegged .column-title { color: #6ee7d4; }
+    #col-below  .column-title { color: #ff8a9e; }
+    #col-above  .column-title { color: #ffc86e; }
+
+    .column-range {
+      font-size: 0.68rem;
+      color: #7a8bb5;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(0,0,0,0.9);
+    }
+
+    .column-count {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 11px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      min-width: 38px;
+      text-align: center;
+      backdrop-filter: blur(4px);
+    }
+
+    #col-pegged .column-count { color: #6ee7d4; background: rgba(110, 231, 212, 0.06); border: 1px solid rgba(110, 231, 212, 0.30); }
+    #col-below  .column-count { color: #ff8a9e; background: rgba(255, 138, 158, 0.06); border: 1px solid rgba(255, 138, 158, 0.30); }
+    #col-above  .column-count { color: #ffc86e; background: rgba(255, 200, 110, 0.06); border: 1px solid rgba(255, 200, 110, 0.30); }
+
+    .column-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 120px;
+    }
+
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 0;
+      gap: 14px;
+      color: #7a8bb5;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(0,0,0,0.9);
+    }
+
+    .spinner {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid rgba(126, 184, 255, 0.15);
+      border-top-color: #7eb8ff;
+      animation: spin 0.9s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(126,184,255,0.5));
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty {
+      text-align: center;
+      padding: 32px 10px;
+      font-size: 0.76rem;
+      color: #6a7a9a;
+      letter-spacing: 0.06em;
+      font-style: italic;
+      text-shadow: 0 0 10px rgba(0,0,0,0.9);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.018);
+      border: 1px solid rgba(126, 184, 255, 0.13);
+      border-radius: 12px;
+      padding: 14px 15px;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      position: relative;
+      overflow: hidden;
+      animation: cardIn 0.5s ease-out both;
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
+    }
+
+    .card.no-anim { animation: none; }
+
+    .card:hover {
+      border-color: rgba(126, 184, 255, 0.40);
+      background: rgba(126, 184, 255, 0.05);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 24px rgba(126, 184, 255, 0.10);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .token-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #f2f6ff;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 0 10px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.9);
+    }
+
+    .token-symbol {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #9ec5ff;
+      background: rgba(126, 184, 255, 0.08);
+      border: 1px solid rgba(126, 184, 255, 0.28);
+      border-radius: 6px;
+      padding: 2px 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      text-shadow: 0 0 8px rgba(126, 184, 255, 0.4);
+    }
+
+    /* ── Descriptor line: currency · issuer ── */
+    .descriptor {
+      font-size: 0.63rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 9px;
+      text-shadow: 0 0 8px rgba(0,0,0,0.9);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.35;
+    }
+
+    .descriptor .desc-cur {
+      color: #8a9dc5;
+      font-weight: 600;
+    }
+
+    .descriptor .desc-sep {
+      color: #4a5a7a;
+      margin: 0 5px;
+    }
+
+    .descriptor .desc-issuer {
+      color: #5f7090;
+      font-weight: 500;
+    }
+
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .price {
+      font-size: 1.28rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    #col-pegged .price { color: #6ee7d4; text-shadow: 0 0 20px rgba(110, 231, 212, 0.55), 0 0 6px rgba(0,0,0,0.9); }
+    #col-below  .price { color: #ff8a9e; text-shadow: 0 0 20px rgba(255, 138, 158, 0.55), 0 0 6px rgba(0,0,0,0.9); }
+    #col-above  .price { color: #ffc86e; text-shadow: 0 0 20px rgba(255, 200, 110, 0.55), 0 0 6px rgba(0,0,0,0.9); }
+
+    .price-currency {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #8a9dc5;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 8px rgba(0,0,0,0.9);
+    }
+
+    .spark-container {
+      height: 24px;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spark-container .sparkline { display: block; width: 100%; height: 24px; }
+
+    .spark-placeholder {
+      height: 24px;
+      width: 100%;
+      background: linear-gradient(90deg, transparent, rgba(126,184,255,0.06), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .contract {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(126, 184, 255, 0.10);
+      border-radius: 7px;
+      padding: 6px 8px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.6rem;
+      color: #8a9dc5;
+      transition: border-color 0.25s, background 0.25s;
+    }
+
+    .contract:hover {
+      border-color: rgba(126, 184, 255, 0.32);
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .contract-label {
+      color: #6a7a9a;
+      font-size: 0.56rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      flex-shrink: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .contract-addr {
+      flex: 1;
+      color: #9eb5dc;
+      cursor: pointer;
+      transition: color 0.2s, text-shadow 0.2s;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      user-select: none;
+      position: relative;
+    }
+
+    .contract-addr:hover {
+      color: #a5d0ff;
+      text-shadow: 0 0 8px rgba(126, 184, 255, 0.6);
+    }
+
+    .contract-addr.copied {
+      color: #6ee7d4 !important;
+      text-shadow: 0 0 10px rgba(110, 231, 212, 0.8) !important;
+    }
+
+    .contract-ext {
+      flex-shrink: 0;
+      color: #5a6a8a;
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 0 2px;
+      transition: color 0.2s, transform 0.2s;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1;
+    }
+
+    .contract-ext:hover {
+      color: #a5d0ff;
+      transform: translate(1px, -1px);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 56px;
+      font-size: 0.74rem;
+      color: #5a6a8a;
+      letter-spacing: 0.08em;
+      line-height: 1.8;
+      text-shadow: 0 0 10px rgba(0,0,0,0.95);
+    }
+
+    footer a { color: #7a8bb5; text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: #a5d0ff; }
+
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(18, 26, 55, 0.92);
+      border: 1px solid rgba(126, 184, 255, 0.45);
+      color: #d5e5ff;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 30px rgba(126,184,255,0.28);
+      opacity: 0;
+      transition: opacity 0.28s, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 200;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast svg {
+      width: 14px;
+      height: 14px;
+      fill: #6ee7d4;
+      vertical-align: -2px;
+      margin-right: 6px;
+      filter: drop-shadow(0 0 6px rgba(110,231,212,0.6));
+    }
+
+    @media (max-width: 1024px) { .columns { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .container { padding: 32px 14px 60px; }
+      .stats-bar { gap: 22px; }
+      .search-wrap { min-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="starfield"></canvas>
+  <div class="vignette"></div>
+
+  <div class="container">
+    <header>
+      <h1 class="title">BMC1 Chain 137 Stable Coins</h1>
+      <p class="subtitle">
+        Polygon Network
+        <span class="chain-badge">Chain 137</span>
+      </p>
+    </header>
+
+    <div class="controls">
+      <div class="search-wrap" id="search-wrap">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input id="search" type="text" placeholder="Search name, currency, symbol or address…" autocomplete="off" spellcheck="false">
+        <button class="search-clear" id="search-clear" title="Clear">✕</button>
+      </div>
+      <button class="refresh-btn" id="refresh-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        <span>Refresh</span>
+        <span class="countdown" id="countdown">60</span>
+      </button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="stat-priced">—</div>
+        <div class="stat-label">With Market Price</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value pegged" id="stat-pegged">—</div>
+        <div class="stat-label">Pegged ~$1.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value below" id="stat-below">—</div>
+        <div class="stat-label">Below $0.90</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value above" id="stat-above">—</div>
+        <div class="stat-label">Above $1.00</div>
+      </div>
+    </div>
+
+    <div class="columns">
+      <section class="column" id="col-pegged">
+        <div class="column-header">
+          <div class="column-title-wrap">
+            <div class="column-title">Pegged ~$1.00</div>
+            <div class="column-range">$0.90 – $1.00</div>
+          </div>
+          <div class="column-count" id="count-pegged">—</div>
+        </div>
+        <div class="column-body" id="body-pegged">
+          <div class="loader"><div class="spinner"></div><span>Fetching prices</span></div>
+        </div>
+      </section>
+
+      <section class="column" id="col-below">
+        <div class="column-header">
+          <div class="column-title-wrap">
+            <div class="column-title">Below $0.90</div>
+            <div class="column-range">&lt; $0.90</div>
+          </div>
+          <div class="column-count" id="count-below">—</div>
+        </div>
+        <div class="column-body" id="body-below">
+          <div class="loader"><div class="spinner"></div><span>Fetching prices</span></div>
+        </div>
+      </section>
+
+      <section class="column" id="col-above">
+        <div class="column-header">
+          <div class="column-title-wrap">
+            <div class="column-title">Above $1.00</div>
+            <div class="column-range">&gt; $1.00</div>
+          </div>
+          <div class="column-count" id="count-above">—</div>
+        </div>
+        <div class="column-body" id="body-above">
+          <div class="loader"><div class="spinner"></div><span>Fetching prices</span></div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Prices &amp; 7-day charts from <a href="https://defillama.com" target="_blank" rel="noopener">DefiLlama</a> ·
+      Tokens without a live market price are hidden.<br>
+      Verified contract addresses on Polygon (Chain 137). Click any address to copy.
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //   TOKEN MASTER LIST
+    //   descriptor = "Currency/Country · Issuer" (short tagline)
+    // ══════════════════════════════════════════════════════════
+    const TOKENS = [
+      { name: "USDC (native)",     symbol: "USDC",   currency: "US Dollar",           issuer: "Circle",             address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359" },
+      { name: "USDC.e (bridged)",  symbol: "USDC.e", currency: "US Dollar · Bridged", issuer: "Circle",             address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" },
+      { name: "USDT0",             symbol: "USDT0",  currency: "US Dollar",           issuer: "Tether",             address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" },
+      { name: "DAI",               symbol: "DAI",    currency: "US Dollar",           issuer: "MakerDAO / Sky",     address: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" },
+      { name: "AUSD",              symbol: "AUSD",   currency: "US Dollar",           issuer: "Agora",              address: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a" },
+      { name: "FRAX",              symbol: "FRAX",   currency: "US Dollar",           issuer: "Frax Finance",       address: "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89" },
+      { name: "FRXUSD",            symbol: "FRXUSD", currency: "US Dollar",           issuer: "Frax Finance",       address: "0x80eede496655fb9047dd39d9f418d5483ed600df" },
+      { name: "TUSD",              symbol: "TUSD",   currency: "US Dollar",           issuer: "TrustToken",         address: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756" },
+      { name: "USD+",              symbol: "USD+",   currency: "US Dollar",           issuer: "Overnight Finance",  address: "0x236eeC6359fb44CCe8f97E99387aa7F8cd5cdE1f" },
+      { name: "MIM",               symbol: "MIM",    currency: "US Dollar",           issuer: "Abracadabra",        address: "0x49a0400587A7F65072c87c4910449fDcC5c47242" },
+      { name: "USDM",              symbol: "USDM",   currency: "US Dollar",           issuer: "Mountain Protocol",  address: "0x59d9356e565ab3a36dd77763fc0d87feaf85508c" },
+      { name: "USDGLO",            symbol: "USDGLO", currency: "US Dollar",           issuer: "Glo Foundation",     address: "0x4F604735c1cF31399C6E711D5962b2B3E0225AD3" },
+      { name: "LUSD",              symbol: "LUSD",   currency: "US Dollar",           issuer: "Liquity",            address: "0x23001f892c0C82b79303EDC9B9033cD190bB21c7" },
+      { name: "GYD",               symbol: "GYD",    currency: "US Dollar",           issuer: "Gyroscope",          address: "0xCA5d8F8a8d49439357d3CF46Ca2e720702F132b8" },
+      { name: "BOB",               symbol: "BOB",    currency: "Bitcoin",             issuer: "ZKBob",              address: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B" },
+      { name: "PYUSD",             symbol: "PYUSD",  currency: "US Dollar",           issuer: "Paxos",              address: "0x99aF3EeA856556646C98c8B9b2548Fe815240750" },
+      { name: "SOFID",             symbol: "SOFID",  currency: "US Dollar",           issuer: "SoFi",               address: "0x0cb6d03b0ac88a463f67b7ad99f9f3ec4678092e" },
+      { name: "CADC",              symbol: "CADC",   currency: "Canadian Dollar",     issuer: "Paytrie",            address: "0x9de41aFF9f55219D5bf4359F167d1D0c772A396D" },
+      { name: "EUROP",             symbol: "EUROP",  currency: "Euro",                issuer: "Schuman Financial",  address: "0x888883b5F5D21fb10Dfeb70e8f9722B9FB0E5E51" },
+      { name: "EURQ",              symbol: "EURQ",   currency: "Euro",                issuer: "Quantoz",            address: "0xD571Edb2EF29DF10fcd6200fd6D0Ed2389983db3" },
+      { name: "EURe",              symbol: "EURe",   currency: "Euro",                issuer: "Monerium",           address: "0x18ec0A6E18E5bc3784fDd3a3634b31245ab704F6" },
+      { name: "EURC",              symbol: "EURC",   currency: "Euro",                issuer: "Circle",             address: "0x2e508500695D7d1bc3EaC69d0A7D71d6EDd727f3" },
+      { name: "EURS",              symbol: "EURS",   currency: "Euro",                issuer: "Stasis",             address: "0xE111178A87A3BFf0c8d18DECBa5798827539Ae99" },
+      { name: "EURAU",             symbol: "EURAU",  currency: "Euro",                issuer: "AllUnity",           address: "0x4933A85b5b5466Fbaf179F72D3DE273c287EC2c2" },
+      { name: "TRYB",              symbol: "TRYB",   currency: "Turkish Lira",        issuer: "Bilira",             address: "0x4Fb71290Ac171E1d144F7221D882BECAc7196EB5" },
+      { name: "VEUR",              symbol: "VEUR",   currency: "Euro",                issuer: "VNX",                address: "0xE4095d9372E68d108225c306A4491cacfB33B097" },
+      { name: "VCHF",              symbol: "VCHF",   currency: "Swiss Franc",         issuer: "VNX",                address: "0xCdB3867935247049e87c38eA270edD305D84c9AE" },
+      { name: "EURO3",             symbol: "EURO3",  currency: "Euro",                issuer: "3A DAO",             address: "0xA0e4c84693266a9d3BBef2f394B33712c76599Ab" },
+      { name: "EURA",              symbol: "EURA",   currency: "Euro",                issuer: "Angle Protocol",     address: "0xe0b52e49357fd4daf2c15e02058dce6bc0057db4" },
+      { name: "EUROe",             symbol: "EUROe",  currency: "Euro",                issuer: "Membrane Finance",   address: "0x820802Fa8a99901F52e39acD21177b0BE6EE2974" },
+      { name: "tGBP",              symbol: "tGBP",   currency: "British Pound",       issuer: "Tokenized GBP",      address: "0x27f6c8289550fCE67f6B50BeD1F519966aFE5287" },
+      { name: "GILTS",             symbol: "GILTS",  currency: "UK Gilts",            issuer: "Etherfuse",          address: "0x46080F31351A6568f44575E3EFfDE7f0C86867f9" },
+      { name: "xZAR",              symbol: "xZAR",   currency: "South African Rand",  issuer: "xZAR",               address: "0x30DE46509Dbc3a491128F97be0aAf70dc7Ff33cB" },
+      { name: "ZARP",              symbol: "ZARP",   currency: "South African Rand",  issuer: "Inves Capital",      address: "0xb755506531786C8aC63B756BaB1ac387bACB0C04" },
+      { name: "NGNC",              symbol: "NGNC",   currency: "Nigerian Naira",      issuer: "Linkio World",       address: "0xAb9aD9089f23e6779a8727900709427719f753e1" },
+      { name: "ZCHF",              symbol: "ZCHF",   currency: "Swiss Franc",         issuer: "Frankencoin",        address: "0xD4dD9e2F021BB459D5A5f6c24C12fE09c5D45553" },
+      { name: "BRZ",               symbol: "BRZ",    currency: "Brazilian Real",      issuer: "Transfero",          address: "0x4eD141110F6EeeAbA9A1df36d8c26f684d2475Dc" },
+      { name: "BRL1",              symbol: "BRL1",   currency: "Brazilian Real",      issuer: "Bitso et al.",       address: "0x5C067C80C00eCd2345b05E83A3e758eF799C40B5" },
+      { name: "BRLA",              symbol: "BRLA",   currency: "Brazilian Real",      issuer: "Avenia",             address: "0xE6A537a407488807F0bbeb0038B79004f19DDDFb" },
+      { name: "MXNe",              symbol: "MXNe",   currency: "Mexican Peso",        issuer: "Etherfuse",          address: "0x615c2F42919c7fED56a44a5C62D5Ef73f748fd0F" },
+      { name: "MXNB",              symbol: "MXNB",   currency: "Mexican Peso",        issuer: "Juno",               address: "0xF197FFC28c23E0309B5559e7a166f2c6164C80aA" },
+      { name: "eMXN",              symbol: "eMXN",   currency: "Mexican Peso",        issuer: "Telcoin",            address: "0x68727e573D21a49c767c3c86A92D9F24bd933c99" },
+      { name: "COPM",              symbol: "COPM",   currency: "Colombian Peso",      issuer: "Minteo",             address: "0x12050c705152931cFEe3DD56c52Fb09Dea816C23" },
+      { name: "JPYC",              symbol: "JPYC",   currency: "Japanese Yen",        issuer: "JPYC Inc",           address: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29" },
+      { name: "JPYC_old",          symbol: "JPYC",   currency: "Japanese Yen · Legacy", issuer: "JPYC Inc",         address: "0x431D5dFf03120AFA4bDf332c61A6e1766eF37BDB" },
+      { name: "XSGD",              symbol: "XSGD",   currency: "Singapore Dollar",    issuer: "StraitsX",           address: "0xDC3326e71D45186F113a2F448984CA0e8D201995" },
+      { name: "XIDR",              symbol: "XIDR",   currency: "Indonesian Rupiah",   issuer: "StraitsX",           address: "0x2c826035c1C36986117A0e949bD6ad4baB54afE2" },
+      { name: "IDRX",              symbol: "IDRX",   currency: "Indonesian Rupiah",   issuer: "IDRX",               address: "0x649a2DA7B28E0D54c13D5eFf95d3A660652742cC" },
+      { name: "IDRT",              symbol: "IDRT",   currency: "Indonesian Rupiah",   issuer: "RupiahToken",        address: "0x554cd6bdD03214b10AafA3e0D4D42De0C5D2937b" },
+      { name: "IDRP",              symbol: "IDRP",   currency: "Indonesian Rupiah",   issuer: "IDRP",               address: "0xADb603C1D0a1b3943C9df35a50099f22fEaCaA58" },
+      { name: "PHPC",              symbol: "PHPC",   currency: "Philippine Peso",     issuer: "CoinsPH",            address: "0x006E1D324FA995f1c1B8318b058Ae9c117A72c20" },
+      { name: "PHT",               symbol: "PHT",    currency: "Philippine Peso",     issuer: "APACX",              address: "0xe75220cB014Dfb2D354bb59be26d7458bB8d0706" },
+      { name: "AUDF",              symbol: "AUDF",   currency: "Australian Dollar",   issuer: "Forte",              address: "0xd2a530170D71a9Cfe1651Fb468E2B98F7Ed7456b" },
+      { name: "NZDS",              symbol: "NZDS",   currency: "New Zealand Dollar",  issuer: "Techemynt",          address: "0xFbBE4b730e1e77d02dC40fEdF9438E2802eab3B5" }
+    ];
+
+    // ══════════════════════════════════════════════════════════
+    //   COSMIC BACKGROUND
+    // ══════════════════════════════════════════════════════════
+    (function initStarfield() {
+      const canvas = document.getElementById('starfield');
+      const ctx = canvas.getContext('2d');
+      let w, h, cx, cy, maxR;
+      let stars = [];
+      let heroStars = [];
+      let galaxies = [];
+      let planets = [];
+      let nebulae = [];
+      let shootingStars = [];
+      let t = 0;
+
+      const ROTATION_SPEED = 0.00085;
+
+      const STAR_CLASSES = [
+        { hue: 220, sat: 55, weight: 8  },
+        { hue: 210, sat: 30, weight: 14 },
+        { hue: 45,  sat: 20, weight: 28 },
+        { hue: 35,  sat: 45, weight: 24 },
+        { hue: 15,  sat: 55, weight: 18 },
+        { hue: 0,   sat: 0,  weight: 8  },
+      ];
+      const TOTAL_WEIGHT = STAR_CLASSES.reduce((s, c) => s + c.weight, 0);
+
+      function pickStarClass() {
+        let r = Math.random() * TOTAL_WEIGHT;
+        for (const c of STAR_CLASSES) {
+          if (r < c.weight) return c;
+          r -= c.weight;
+        }
+        return STAR_CLASSES[2];
+      }
+
+      class Galaxy {
+        constructor(x, y, size, hue, dir) {
+          this.x = x; this.y = y; this.size = size; this.hue = hue;
+          this.rotation = Math.random() * Math.PI * 2;
+          this.rotSpeed = dir * 0.00022;
+          this.alpha = 0.70 + Math.random() * 0.28;
+          const pad = size * 1.45;
+          this.canvas = document.createElement('canvas');
+          this.canvas.width = pad * 2;
+          this.canvas.height = pad * 2;
+          this.cx = pad; this.cy = pad;
+          this._render();
+        }
+
+        _render() {
+          const c = this.canvas.getContext('2d');
+          const arms = 2 + Math.floor(Math.random() * 2);
+          const count = Math.floor(this.size * 14);
+
+          let coreGrad = c.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, this.size * 0.75);
+          coreGrad.addColorStop(0,   `hsla(${this.hue}, 60%, 92%, 0.55)`);
+          coreGrad.addColorStop(0.22,`hsla(${this.hue}, 65%, 75%, 0.28)`);
+          coreGrad.addColorStop(0.55,`hsla(${this.hue}, 60%, 55%, 0.08)`);
+          coreGrad.addColorStop(1,   `hsla(${this.hue}, 60%, 45%, 0)`);
+          c.fillStyle = coreGrad;
+          c.beginPath();
+          c.arc(this.cx, this.cy, this.size * 0.75, 0, Math.PI * 2);
+          c.fill();
+
+          coreGrad = c.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, this.size * 0.22);
+          coreGrad.addColorStop(0,   `hsla(${this.hue + 15}, 40%, 100%, 0.95)`);
+          coreGrad.addColorStop(0.35,`hsla(${this.hue + 10}, 55%, 92%, 0.55)`);
+          coreGrad.addColorStop(1,   `hsla(${this.hue}, 60%, 70%, 0)`);
+          c.fillStyle = coreGrad;
+          c.beginPath();
+          c.arc(this.cx, this.cy, this.size * 0.22, 0, Math.PI * 2);
+          c.fill();
+
+          for (let i = 0; i < count; i++) {
+            const arm = Math.floor(Math.random() * arms);
+            const armOffset = (arm / arms) * Math.PI * 2;
+            const tt = Math.pow(Math.random(), 0.5);
+            const angle = armOffset + tt * 4.2;
+            const r = tt * this.size;
+            const scatterA = (Math.random() - 0.5) * 0.55;
+            const scatterR = (Math.random() - 0.5) * this.size * 0.10;
+            const px = this.cx + Math.cos(angle + scatterA) * (r + scatterR);
+            const py = this.cy + Math.sin(angle + scatterA) * (r + scatterR);
+            const size = Math.random() * 0.55 + 0.18;
+            const coreBoost = 1 - (r / this.size) * 0.7;
+            const alpha = (Math.random() * 0.55 + 0.22) * coreBoost;
+            const hueShift = (Math.random() - 0.5) * 60;
+            const lightness = 78 + coreBoost * 18;
+            c.beginPath();
+            c.arc(px, py, size, 0, Math.PI * 2);
+            c.fillStyle = `hsla(${this.hue + hueShift}, 70%, ${lightness}%, ${alpha})`;
+            c.fill();
+          }
+
+          for (let i = 0; i < 40; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = Math.pow(Math.random(), 1.8) * this.size * 0.18;
+            const px = this.cx + Math.cos(a) * r;
+            const py = this.cy + Math.sin(a) * r;
+            const size = Math.random() * 0.9 + 0.3;
+            c.beginPath();
+            c.arc(px, py, size, 0, Math.PI * 2);
+            c.fillStyle = `hsla(${this.hue + 20}, 40%, 98%, ${Math.random() * 0.7 + 0.4})`;
+            c.fill();
+          }
+        }
+
+        draw(ctx) {
+          this.rotation += this.rotSpeed;
+          ctx.save();
+          ctx.globalAlpha = this.alpha;
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rotation);
+          ctx.drawImage(this.canvas, -this.cx, -this.cy);
+          ctx.restore();
+        }
+      }
+
+      class Nebula {
+        constructor(W, H) {
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          this.size = 220 + Math.random() * 360;
+          this.hue = Math.random() < 0.5
+            ? 250 + Math.random() * 50
+            : 175 + Math.random() * 40;
+          this.vx = (Math.random() - 0.5) * 0.06;
+          this.vy = (Math.random() - 0.5) * 0.06;
+          this.pad = this.size * 1.1;
+
+          this.canvas = document.createElement('canvas');
+          this.canvas.width = this.pad * 2;
+          this.canvas.height = this.pad * 2;
+          const c = this.canvas.getContext('2d');
+
+          for (let i = 0; i < 16; i++) {
+            const ox = (Math.random() - 0.5) * this.size * 0.75;
+            const oy = (Math.random() - 0.5) * this.size * 0.75;
+            const r = this.size * (0.28 + Math.random() * 0.55);
+            const hshift = (Math.random() - 0.5) * 35;
+            const g = c.createRadialGradient(this.pad + ox, this.pad + oy, 0, this.pad + ox, this.pad + oy, r);
+            g.addColorStop(0,    `hsla(${this.hue + hshift}, 75%, 58%, 0.10)`);
+            g.addColorStop(0.45, `hsla(${this.hue + hshift}, 70%, 52%, 0.045)`);
+            g.addColorStop(1,    `hsla(${this.hue + hshift}, 65%, 48%, 0)`);
+            c.fillStyle = g;
+            c.beginPath();
+            c.arc(this.pad + ox, this.pad + oy, r, 0, Math.PI * 2);
+            c.fill();
+          }
+        }
+
+        draw(ctx, W, H) {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < -this.pad) this.x = W + this.pad;
+          if (this.x > W + this.pad) this.x = -this.pad;
+          if (this.y < -this.pad) this.y = H + this.pad;
+          if (this.y > H + this.pad) this.y = -this.pad;
+
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.drawImage(this.canvas, this.x - this.pad, this.y - this.pad);
+          ctx.restore();
+        }
+      }
+
+      class ShootingStar {
+        constructor(W, H) {
+          this.x = Math.random() * W * 1.2 - W * 0.1;
+          this.y = -30;
+          const dirRight = Math.random() < 0.6;
+          this.angle = dirRight
+            ? Math.PI * 0.28 + (Math.random() - 0.5) * 0.30
+            : Math.PI * 0.72 + (Math.random() - 0.5) * 0.30;
+          this.speed = 7 + Math.random() * 6;
+          this.len = 90 + Math.random() * 130;
+          this.life = 0;
+          this.maxLife = 80 + Math.random() * 70;
+          this.hue = Math.random() < 0.5 ? 200 : 45;
+          this.thickness = 1 + Math.random() * 1.4;
+        }
+
+        update() {
+          this.x += Math.cos(this.angle) * this.speed;
+          this.y += Math.sin(this.angle) * this.speed;
+          this.life++;
+        }
+
+        draw(ctx) {
+          const fade = Math.sin((this.life / this.maxLife) * Math.PI);
+          const dx = Math.cos(this.angle) * this.len;
+          const dy = Math.sin(this.angle) * this.len;
+          const tailX = this.x - dx;
+          const tailY = this.y - dy;
+
+          const g = ctx.createLinearGradient(this.x, this.y, tailX, tailY);
+          g.addColorStop(0,   `hsla(${this.hue}, 80%, 95%, ${fade})`);
+          g.addColorStop(0.4, `hsla(${this.hue}, 70%, 72%, ${fade * 0.5})`);
+          g.addColorStop(1,   `hsla(${this.hue}, 60%, 60%, 0)`);
+
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = g;
+          ctx.lineWidth = this.thickness;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(tailX, tailY);
+          ctx.stroke();
+
+          const rg = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 9);
+          rg.addColorStop(0, `hsla(${this.hue}, 80%, 100%, ${fade})`);
+          rg.addColorStop(1, `hsla(${this.hue}, 80%, 90%, 0)`);
+          ctx.fillStyle = rg;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        get dead() {
+          return this.life > this.maxLife
+            || this.x < -260 || this.x > w + 260
+            || this.y > h + 260;
+        }
+      }
+
+      class Planet {
+        constructor(W, H) {
+          const side = Math.random();
+          if (side < 0.35) {
+            this.x = Math.random() * W * 0.28;
+            this.y = Math.random() * H;
+          } else if (side < 0.70) {
+            this.x = W * 0.72 + Math.random() * W * 0.28;
+            this.y = Math.random() * H;
+          } else {
+            this.x = Math.random() * W;
+            this.y = Math.random() < 0.5
+              ? Math.random() * H * 0.20
+              : H * 0.80 + Math.random() * H * 0.20;
+          }
+          const roll = Math.random();
+          if (roll < 0.5)       this.radius = 6  + Math.random() * 11;
+          else if (roll < 0.85) this.radius = 18 + Math.random() * 24;
+          else                  this.radius = 42 + Math.random() * 38;
+
+          this.hue = Math.random() * 360;
+          this.sat = 40 + Math.random() * 45;
+          this.light = 42 + Math.random() * 32;
+
+          this.hasRing = Math.random() < 0.42;
+          this.ringTilt = (Math.random() - 0.5) * 0.55;
+          this.ringScale = 1.65 + Math.random() * 0.95;
+          this.ringFlat = 0.14 + Math.random() * 0.18;
+
+          this.dx = (Math.random() - 0.5) * 0.10;
+          this.dy = (Math.random() - 0.5) * 0.10;
+
+          this.alpha = 0.55 + Math.random() * 0.35;
+
+          this.bands = [];
+          const bandCount = 2 + Math.floor(Math.random() * 5);
+          for (let i = 0; i < bandCount; i++) {
+            this.bands.push({
+              y: (Math.random() - 0.5) * 1.5,
+              h: 0.06 + Math.random() * 0.22,
+              dark: Math.random() < 0.55,
+              a: 0.06 + Math.random() * 0.18,
+            });
+          }
+          this.spot = Math.random() < 0.4
+            ? { x: (Math.random() - 0.5) * 1.1, y: (Math.random() - 0.5) * 1.1, r: 0.10 + Math.random() * 0.20, a: 0.18 }
+            : null;
+        }
+
+        _drawRing(ctx, front) {
+          const rx = this.radius * this.ringScale;
+          const ry = rx * this.ringFlat;
+          ctx.save();
+          ctx.rotate(this.ringTilt);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx, ry, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
+          ctx.strokeStyle = `hsla(${this.hue}, 50%, 78%, 0.42)`;
+          ctx.lineWidth = Math.max(1.2, this.radius * 0.18);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx * 1.05, ry * 1.05, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
+          ctx.strokeStyle = `hsla(${this.hue}, 60%, 92%, 0.22)`;
+          ctx.lineWidth = Math.max(0.7, this.radius * 0.07);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        draw(ctx, W, H) {
+          this.x += this.dx;
+          this.y += this.dy;
+          const pad = this.radius * this.ringScale * 2 + 10;
+          if (this.x < -pad) this.x = W + pad;
+          if (this.x > W + pad) this.x = -pad;
+          if (this.y < -pad) this.y = H + pad;
+          if (this.y > H + pad) this.y = -pad;
+
+          ctx.save();
+          ctx.globalAlpha = this.alpha;
+          ctx.translate(this.x, this.y);
+
+          if (this.hasRing) this._drawRing(ctx, false);
+
+          const g = ctx.createRadialGradient(
+            -this.radius * 0.38, -this.radius * 0.38, this.radius * 0.05,
+             0, 0, this.radius
+          );
+          g.addColorStop(0,    `hsl(${this.hue}, ${this.sat}%, ${Math.min(this.light + 34, 94)}%)`);
+          g.addColorStop(0.35, `hsl(${this.hue}, ${this.sat}%, ${this.light + 8}%)`);
+          g.addColorStop(0.75, `hsl(${this.hue}, ${this.sat}%, ${this.light * 0.6}%)`);
+          g.addColorStop(1,    `hsl(${this.hue}, ${this.sat}%, ${this.light * 0.15}%)`);
+
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = g;
+          ctx.fill();
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.clip();
+
+          for (const b of this.bands) {
+            ctx.fillStyle = b.dark
+              ? `hsla(${this.hue}, ${this.sat}%, 6%, ${b.a})`
+              : `hsla(${this.hue}, ${this.sat}%, 94%, ${b.a})`;
+            const y = b.y * this.radius;
+            const bh = b.h * this.radius;
+            ctx.beginPath();
+            ctx.ellipse(0, y, this.radius * 1.02, bh, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (this.spot) {
+            ctx.fillStyle = `hsla(${this.hue}, ${this.sat}%, 12%, ${this.spot.a})`;
+            ctx.beginPath();
+            ctx.arc(this.spot.x * this.radius, this.spot.y * this.radius, this.spot.r * this.radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+
+          const rimGrad = ctx.createRadialGradient(0, 0, this.radius * 0.92, 0, 0, this.radius * 1.12);
+          rimGrad.addColorStop(0, `hsla(${this.hue}, 85%, 80%, 0)`);
+          rimGrad.addColorStop(0.5, `hsla(${this.hue}, 85%, 82%, 0.22)`);
+          rimGrad.addColorStop(1, `hsla(${this.hue}, 85%, 84%, 0)`);
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius * 1.12, 0, Math.PI * 2);
+          ctx.fillStyle = rimGrad;
+          ctx.fill();
+
+          if (this.hasRing) this._drawRing(ctx, true);
+
+          ctx.restore();
+        }
+      }
+
+      function generateStars() {
+        stars = [];
+        heroStars = [];
+        const count = Math.floor((w * h) / 2400);
+        for (let i = 0; i < count; i++) {
+          const r = Math.sqrt(Math.random()) * maxR;
+          const angle = Math.random() * Math.PI * 2;
+          const cls = pickStarClass();
+          stars.push({
+            r, angle,
+            size: Math.random() * 1.35 + 0.28,
+            baseAlpha: Math.random() * 0.55 + 0.28,
+            twinkleSpeed: (Math.random() * 0.018 + 0.005) * 1.05,
+            twinklePhase: Math.random() * Math.PI * 2,
+            hue: cls.hue, sat: cls.sat,
+          });
+        }
+        const heroCount = Math.floor((w * h) / 260000) + 3;
+        for (let i = 0; i < heroCount; i++) {
+          const r = Math.sqrt(Math.random()) * maxR;
+          const angle = Math.random() * Math.PI * 2;
+          const cls = pickStarClass();
+          heroStars.push({
+            r, angle,
+            size: Math.random() * 1.6 + 1.6,
+            baseAlpha: Math.random() * 0.35 + 0.65,
+            twinkleSpeed: (Math.random() * 0.010 + 0.003) * 1.05,
+            twinklePhase: Math.random() * Math.PI * 2,
+            hue: cls.hue, sat: cls.sat,
+            flareLength: Math.random() * 6 + 8,
+          });
+        }
+      }
+
+      function generateGalaxies() {
+        galaxies = [];
+        const count = 3 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) {
+          galaxies.push(new Galaxy(
+            Math.random() * w, Math.random() * h,
+            70 + Math.random() * 140,
+            Math.random() * 360,
+            Math.random() < 0.5 ? 1 : -1
+          ));
+        }
+      }
+
+      function generateNebulae() {
+        nebulae = [];
+        const count = 3 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < count; i++) nebulae.push(new Nebula(w, h));
+      }
+
+      function generatePlanets() {
+        planets = [];
+        const count = 5 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) planets.push(new Planet(w, h));
+      }
+
+      function resize() {
+        w = canvas.width  = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        cx = w / 2; cy = h / 2;
+        maxR = Math.sqrt(w * w + h * h) / 2 + 60;
+        generateStars();
+        generateGalaxies();
+        generateNebulae();
+        generatePlanets();
+      }
+
+      function draw() {
+        t += 1;
+        ctx.clearRect(0, 0, w, h);
+
+        for (const n of nebulae) n.draw(ctx, w, h);
+        for (const g of galaxies) g.draw(ctx);
+
+        for (const s of stars) {
+          s.angle += ROTATION_SPEED;
+          const x = cx + Math.cos(s.angle) * s.r;
+          const y = cy + Math.sin(s.angle) * s.r;
+          const twinkle = Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 0.35 + 0.65;
+          const alpha = s.baseAlpha * twinkle;
+          const light = 80 + twinkle * 18;
+
+          ctx.beginPath();
+          ctx.arc(x, y, s.size, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, ${light}%, ${alpha})`;
+          ctx.fill();
+
+          if (s.size > 1.0) {
+            ctx.beginPath();
+            ctx.arc(x, y, s.size * 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, 78%, ${alpha * 0.10})`;
+            ctx.fill();
+          }
+        }
+
+        for (const s of heroStars) {
+          s.angle += ROTATION_SPEED;
+          const x = cx + Math.cos(s.angle) * s.r;
+          const y = cy + Math.sin(s.angle) * s.r;
+          const twinkle = Math.sin(t * s.twinkleSpeed + s.twinklePhase) * 0.30 + 0.70;
+          const alpha = s.baseAlpha * twinkle;
+          const light = 88 + twinkle * 12;
+
+          const glow = ctx.createRadialGradient(x, y, 0, x, y, s.size * 8);
+          glow.addColorStop(0,   `hsla(${s.hue}, ${s.sat}%, 96%, ${alpha * 0.55})`);
+          glow.addColorStop(0.35,`hsla(${s.hue}, ${s.sat}%, 88%, ${alpha * 0.15})`);
+          glow.addColorStop(1,   `hsla(${s.hue}, ${s.sat}%, 80%, 0)`);
+          ctx.beginPath();
+          ctx.arc(x, y, s.size * 8, 0, Math.PI * 2);
+          ctx.fillStyle = glow;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(x, y, s.size, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${s.hue}, ${Math.max(s.sat - 20, 0)}%, ${light}%, ${alpha})`;
+          ctx.fill();
+
+          const L = s.flareLength * twinkle;
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = `hsla(${s.hue}, ${s.sat}%, 92%, ${alpha * 0.55})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(x - L, y); ctx.lineTo(x + L, y);
+          ctx.moveTo(x, y - L); ctx.lineTo(x, y + L);
+          ctx.stroke();
+
+          const L2 = L * 0.42;
+          ctx.strokeStyle = `hsla(${s.hue}, ${s.sat}%, 92%, ${alpha * 0.28})`;
+          ctx.beginPath();
+          ctx.moveTo(x - L2, y - L2); ctx.lineTo(x + L2, y + L2);
+          ctx.moveTo(x + L2, y - L2); ctx.lineTo(x - L2, y + L2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        for (const p of planets) p.draw(ctx, w, h);
+
+        if (shootingStars.length < 3 && Math.random() < 0.0015) {
+          shootingStars.push(new ShootingStar(w, h));
+        }
+        for (let i = shootingStars.length - 1; i >= 0; i--) {
+          const ss = shootingStars[i];
+          ss.update();
+          ss.draw(ctx);
+          if (ss.dead) shootingStars.splice(i, 1);
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+      draw();
+    })();
+
+    // ══════════════════════════════════════════════════════════
+    //   STATE
+    // ══════════════════════════════════════════════════════════
+    const allPrices = {};
+    const sparkCache = {};
+    let currentCategories = { pegged: [], below: [], above: [] };
+    let searchQuery = '';
+    let firstRenderDone = false;
+    let refreshing = false;
+
+    const REFRESH_SECONDS = 60;
+    const SPARK_CACHE_MS = 5 * 60 * 1000;
+    let secondsLeft = REFRESH_SECONDS;
+    let countdownTimer = null;
+
+    // ══════════════════════════════════════════════════════════
+    //   HELPERS
+    // ══════════════════════════════════════════════════════════
+    function formatPrice(p) {
+      if (p >= 100) return '$' + p.toFixed(2);
+      if (p >= 1)   return '$' + p.toFixed(4);
+      return '$' + p.toFixed(6);
+    }
+
+    function escapeHTML(s) {
+      return String(s).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[ch]);
+    }
+
+    let toastTimer = null;
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      const check = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+      toast.innerHTML = (isError ? '' : check) + escapeHTML(msg);
+      toast.style.borderColor = isError ? 'rgba(255,138,158,0.55)' : 'rgba(126,184,255,0.45)';
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function sparklineSVG(prices) {
+      if (!prices || prices.length < 2) return '';
+      const W = 100, H = 22;
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      const range = (max - min) || 1;
+      const step = W / (prices.length - 1);
+
+      const pts = prices.map((p, i) => [
+        i * step,
+        H - 2 - ((p - min) / range) * (H - 6)
+      ]);
+
+      const first = prices[0];
+      const last = prices[prices.length - 1];
+      const change = first ? (last - first) / first : 0;
+      let color;
+      if (change > 0.0015)       color = '#6ee7d4';
+      else if (change < -0.0015) color = '#ff8a9e';
+      else                       color = '#7a8bb5';
+
+      const d = 'M ' + pts.map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' L ');
+      const areaD = d + ` L ${W},${H} L 0,${H} Z`;
+      const gid = 'sg' + Math.random().toString(36).slice(2, 9);
+      const lastPt = pts[pts.length - 1];
+
+      return `<svg class="sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="${color}" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#${gid})"/>
+        <path d="${d}" fill="none" stroke="${color}" stroke-width="1.4"
+              stroke-linecap="round" stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"/>
+        <circle cx="${lastPt[0].toFixed(2)}" cy="${lastPt[1].toFixed(2)}" r="1.8"
+                fill="${color}" vector-effect="non-scaling-stroke"/>
+      </svg>`;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //   CARD RENDERING
+    // ══════════════════════════════════════════════════════════
+    function buildCard(token, idx, animate) {
+      const card = document.createElement('div');
+      card.className = 'card' + (animate ? '' : ' no-anim');
+      if (animate) card.style.animationDelay = `${Math.min(idx * 0.025, 0.6)}s`;
+      card.dataset.addr = token.address.toLowerCase();
+      card.dataset.search = (
+        token.name + ' ' + token.symbol + ' ' +
+        token.currency + ' ' + token.issuer + ' ' + token.address
+      ).toLowerCase();
+
+      const cached = sparkCache[token.address.toLowerCase()];
+      const sparkHTML = cached
+        ? sparklineSVG(cached.prices)
+        : '<div class="spark-placeholder"></div>';
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="token-name" title="${escapeHTML(token.name)}">${escapeHTML(token.name)}</div>
+          <div class="token-symbol">${escapeHTML(token.symbol)}</div>
+        </div>
+        <div class="descriptor" title="${escapeHTML(token.currency)} · ${escapeHTML(token.issuer)}">
+          <span class="desc-cur">${escapeHTML(token.currency)}</span>
+          <span class="desc-sep">·</span>
+          <span class="desc-issuer">${escapeHTML(token.issuer)}</span>
+        </div>
+        <div class="price-row">
+          <span class="price">${formatPrice(token.price)}</span>
+          <span class="price-currency">USD</span>
+        </div>
+        <div class="spark-container">${sparkHTML}</div>
+        <div class="contract">
+          <span class="contract-label">CA</span>
+          <span class="contract-addr" title="${token.address} · click to copy">${token.address}</span>
+          <a class="contract-ext" href="https://polygonscan.com/token/${token.address}"
+             target="_blank" rel="noopener" title="View on Polygonscan">↗</a>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderColumn(columnId, visibleTokens, totalCount) {
+      const body  = document.getElementById(`body-${columnId}`);
+      const count = document.getElementById(`count-${columnId}`);
+
+      body.innerHTML = '';
+      count.textContent = totalCount;
+
+      if (totalCount === 0) {
+        body.innerHTML = '<div class="empty">No tokens in this range</div>';
+        return;
+      }
+      if (visibleTokens.length === 0) {
+        body.innerHTML = '<div class="empty">No matches for filter</div>';
+        return;
+      }
+
+      const animate = !firstRenderDone;
+      visibleTokens.forEach((tk, i) => body.appendChild(buildCard(tk, i, animate)));
+    }
+
+    function render() {
+      const q = searchQuery.trim().toLowerCase();
+      const filter = t =>
+        !q ||
+        t.name.toLowerCase().includes(q) ||
+        t.symbol.toLowerCase().includes(q) ||
+        t.currency.toLowerCase().includes(q) ||
+        t.issuer.toLowerCase().includes(q) ||
+        t.address.toLowerCase().includes(q);
+
+      renderColumn('pegged',
+        currentCategories.pegged.filter(filter), currentCategories.pegged.length);
+      renderColumn('below',
+        currentCategories.below.filter(filter),  currentCategories.below.length);
+      renderColumn('above',
+        currentCategories.above.filter(filter),  currentCategories.above.length);
+
+      firstRenderDone = true;
+    }
+
+    function updateStats() {
+      const p = currentCategories.pegged.length;
+      const b = currentCategories.below.length;
+      const a = currentCategories.above.length;
+      document.getElementById('stat-priced').textContent = p + b + a;
+      document.getElementById('stat-pegged').textContent = p;
+      document.getElementById('stat-below').textContent  = b;
+      document.getElementById('stat-above').textContent  = a;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //   PRICE FETCH & CATEGORIZE
+    // ══════════════════════════════════════════════════════════
+    async function fetchAllPrices() {
+      const CHUNK_SIZE = 25;
+      const chunks = [];
+      for (let i = 0; i < TOKENS.length; i += CHUNK_SIZE) {
+        chunks.push(TOKENS.slice(i, i + CHUNK_SIZE));
+      }
+
+      const result = {};
+      await Promise.all(chunks.map(chunk => {
+        const ids = chunk.map(t => `polygon:${t.address}`).join(',');
+        const url = `https://coins.llama.fi/prices/current/${ids}`;
+        return fetch(url)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.coins) {
+              for (const [k, v] of Object.entries(data.coins)) {
+                result[k.toLowerCase()] = v;
+              }
+            }
+          })
+          .catch(err => console.warn('Price fetch failed:', err));
+      }));
+      return result;
+    }
+
+    function categorize() {
+      const next = { pegged: [], below: [], above: [] };
+      for (const token of TOKENS) {
+        const key = `polygon:${token.address.toLowerCase()}`;
+        const info = allPrices[key];
+        if (!info || info.price == null || info.price <= 0) continue;
+
+        const price = info.price;
+        const entry = { ...token, price };
+
+        if (price < 0.90)      next.below.push(entry);
+        else if (price > 1.00) next.above.push(entry);
+        else                   next.pegged.push(entry);
+      }
+      next.pegged.sort((a, b) => a.price - b.price);
+      next.below.sort((a, b)  => a.price - b.price);
+      next.above.sort((a, b)  => a.price - b.price);
+      currentCategories = next;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //   7-DAY SPARKLINES
+    // ══════════════════════════════════════════════════════════
+    async function fetchChart(address) {
+      const key = `polygon:${address.toLowerCase()}`;
+      const url = `https://coins.llama.fi/chart/${key}?span=7&period=1d`;
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const data = await r.json();
+      const coin = data.coins && data.coins[key];
+      if (!coin || !coin.prices || coin.prices.length < 2) return null;
+      return coin.prices.map(p => p.price).filter(v => typeof v === 'number' && v > 0);
+    }
+
+    async function loadSparklines() {
+      const queue = TOKENS.filter(t => {
+        const c = sparkCache[t.address.toLowerCase()];
+        return !c || (Date.now() - c.fetchedAt) > SPARK_CACHE_MS;
+      });
+
+      const CONCURRENCY = 6;
+      let idx = 0;
+
+      async function worker() {
+        while (idx < queue.length) {
+          const i = idx++;
+          const token = queue[i];
+          try {
+            const prices = await fetchChart(token.address);
+            if (!prices || prices.length < 2) continue;
+            const key = token.address.toLowerCase();
+            sparkCache[key] = { prices, fetchedAt: Date.now() };
+
+            const card = document.querySelector(`.card[data-addr="${key}"]`);
+            if (card) {
+              const container = card.querySelector('.spark-container');
+              if (container) container.innerHTML = sparklineSVG(prices);
+            }
+          } catch (e) { /* skip silently */ }
+        }
+      }
+
+      const workers = [];
+      for (let i = 0; i < CONCURRENCY; i++) workers.push(worker());
+      await Promise.all(workers);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //   REFRESH FLOW
+    // ══════════════════════════════════════════════════════════
+    async function refreshPrices(manual = false) {
+      if (refreshing) return;
+      refreshing = true;
+
+      const btn = document.getElementById('refresh-btn');
+      btn.classList.add('spinning');
+      btn.disabled = true;
+
+      try {
+        const prices = await fetchAllPrices();
+        Object.keys(allPrices).forEach(k => delete allPrices[k]);
+        Object.assign(allPrices, prices);
+
+        categorize();
+        render();
+        updateStats();
+      } catch (e) {
+        console.warn('Refresh failed:', e);
+      } finally {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+        refreshing = false;
+        secondsLeft = REFRESH_SECONDS;
+        updateCountdown();
+      }
+    }
+
+    function updateCountdown() {
+      document.getElementById('countdown').textContent = secondsLeft;
+    }
+
+    function startAutoRefresh() {
+      clearInterval(countdownTimer);
+      secondsLeft = REFRESH_SECONDS;
+      updateCountdown();
+      countdownTimer = setInterval(() => {
+        secondsLeft -= 1;
+        if (secondsLeft <= 0) {
+          refreshPrices(false);
+        } else {
+          updateCountdown();
+        }
+      }, 1000);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //   UI WIRING
+    // ══════════════════════════════════════════════════════════
+    const searchInput = document.getElementById('search');
+    const searchWrap  = document.getElementById('search-wrap');
+    const searchClear = document.getElementById('search-clear');
+
+    let searchDebounce = null;
+    searchInput.addEventListener('input', e => {
+      const v = e.target.value;
+      searchWrap.classList.toggle('has-value', v.length > 0);
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        searchQuery = v;
+        render();
+      }, 110);
+    });
+
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      searchWrap.classList.remove('has-value');
+      render();
+      searchInput.focus();
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+      secondsLeft = REFRESH_SECONDS;
+      updateCountdown();
+      refreshPrices(true);
+    });
+
+    document.addEventListener('click', e => {
+      const addrEl = e.target.closest('.contract-addr');
+      if (!addrEl) return;
+      const addr = addrEl.textContent.trim();
+      const doCopy = () => {
+        showToast('Copied ' + addr.slice(0, 8) + '…' + addr.slice(-6));
+        addrEl.classList.add('copied');
+        setTimeout(() => addrEl.classList.remove('copied'), 1100);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(addr).then(doCopy).catch(() => {
+          showToast('Copy failed', true);
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = addr;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          doCopy();
+        } catch (err) {
+          showToast('Copy failed', true);
+        }
+        document.body.removeChild(ta);
+      }
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //   BOOT
+    // ══════════════════════════════════════════════════════════
+    (async function boot() {
+      await refreshPrices(true);
+      startAutoRefresh();
+      loadSparklines();
+    })();
+  </script>
+
+</body>
+</html>
